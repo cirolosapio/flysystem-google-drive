@@ -3,29 +3,33 @@
 [![Author](https://img.shields.io/badge/author-nao--pon%20hypweb-blue.svg?style=flat)](http://xoops.hypweb.net/)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
 
-
 ## Installation
 
 - For Google Drive API V3
+
 ```bash
 composer require nao-pon/flysystem-google-drive:~1.1
 ```
+
 - For Google Drive API V2 "**Deprecated**"
+
 ```bash
 composer require nao-pon/flysystem-google-drive:~1.0.0
 ```
 
 ## Usage
+
 #### Follow [Google Docs](https://developers.google.com/drive/v3/web/enable-sdk) to obtain your `ClientId, ClientSecret & refreshToken` in addition you can also check this [easy-to-follow tutorial](https://gist.github.com/ivanvermeyen/cc7c59c185daad9d4e7cb8c661d7b89b)
+
 - you can also check [This Example](https://github.com/nao-pon/flysystem-google-drive/blob/master/example/GoogleUpload.php) for a better understanding.
 
 ```php
-$client = new \Google_Client();
+$client = new \Google\Client();
 $client->setClientId('[app client id].apps.googleusercontent.com');
 $client->setClientSecret('[app client secret]');
 $client->refreshToken('[your refresh token]');
 
-$service = new \Google_Service_Drive($client);
+$service = new \Google\Service\Drive($client);
 
 $adapter = new \Hypweb\Flysystem\GoogleDrive\GoogleDriveAdapter($service, '['root' or folder ID]');
 /* Recommended cached adapter use */
@@ -49,16 +53,16 @@ composer require nao-pon/flysystem-google-drive:~1.1
 require 'vender/autoload.php';
 
 // Google API Client
-$client = new \Google_Client();
+$client = new \Google\Client();
 $client->setClientId('xxxxx CLIENTID xxxxx');
 $client->setClientSecret('xxxxx CLIENTSECRET xxxxx');
 $client->refreshToken('xxxxx REFRESH TOKEN xxxxx');
 
 // Google Drive Adapter
 $googleDrive = new \Hypweb\Flysystem\GoogleDrive\GoogleDriveAdapter(
-	new \Google_Service_Drive($client), // Client service
-	'root',                             // Folder ID as root ('root' or Folder ID)
-	[ 'useHasDir' => true ]             // options (elFinder need hasDir method)
+ new \Google\Service\Drive($client), // Client service
+ 'root',                             // Folder ID as root ('root' or Folder ID)
+ [ 'useHasDir' => true ]             // options (elFinder need hasDir method)
 );
 
 // Extended cached strage adapter class for cache enabled of hasDir() method
@@ -71,22 +75,22 @@ class myCachedStrageAdapter extends \League\Flysystem\Cached\Storage\Adapter
 // Make Flysystem adapter and cache object
 $useCache = true;
 if ($useCache) {
-	// Example to Flysystem cacheing
-	$cache = new myCachedStrageAdapter(
-		new \League\Flysystem\Adapter\Local('flycache'),
-		'gdcache',
-		300
-	);
+ // Example to Flysystem cacheing
+ $cache = new myCachedStrageAdapter(
+  new \League\Flysystem\Adapter\Local('flycache'),
+  'gdcache',
+  300
+ );
 
-	// Flysystem cached adapter
-	$adapter = new \League\Flysystem\Cached\CachedAdapter(
-		$googleDrive,
-		$cache
-	);
+ // Flysystem cached adapter
+ $adapter = new \League\Flysystem\Cached\CachedAdapter(
+  $googleDrive,
+  $cache
+ );
 } else {
-	// Not use cached adapter
-	$cache = null;
-	$adapter = $googleDrive;
+ // Not use cached adapter
+ $cache = null;
+ $adapter = $googleDrive;
 }
 
 // Google Drive elFinder Volume driver
@@ -103,7 +107,7 @@ $gdrive = [
 
 // elFinder volume roots options
 $elFinderOpts = [
-	'roots' => []
+ 'roots' => []
 ];
 
 $elFinderOpts['roots'][] = $gdrive;
@@ -120,4 +124,4 @@ $connector->run();
 
 ## TODO
 
-* Unit tests to be written
+- Unit tests to be written

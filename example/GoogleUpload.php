@@ -18,12 +18,12 @@ class GoogleUpload
 
     public function __construct()
     {
-        $this->client = new \Google_Client();
+        $this->client = new \Google\Client();
         $this->client->setClientId($this->ClientId);
         $this->client->setClientSecret($this->ClientSecret);
         $this->client->refreshToken($this->refreshToken);
 
-        $this->service = new \Google_Service_Drive($this->client);
+        $this->service = new \Google\Service\Drive($this->client);
 
         // we cache the id to avoid having google creating
         // a new folder on each time we call it,
@@ -43,7 +43,7 @@ class GoogleUpload
      */
     protected function create_folder()
     {
-        $fileMetadata = new \Google_Service_Drive_DriveFile([
+        $fileMetadata = new \Google\Service\Drive\DriveFile([
             'name'     => 'google_drive_folder_name',
             'mimeType' => 'application/vnd.google-apps.folder',
         ]);
