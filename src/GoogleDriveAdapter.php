@@ -1,11 +1,11 @@
 <?php
 namespace Hypweb\Flysystem\GoogleDrive;
 
-use Google_Service_Drive;
-use Google_Service_Drive_DriveFile;
-use Google_Service_Drive_FileList;
-use Google_Service_Drive_Permission;
-use Google_Http_MediaFileUpload;
+use Google\Service\Drive;
+use Google\Service\Drive\DriveFile;
+use Google\Service\Drive\FileList;
+use Google\Service\Drive\Permission;
+use Google\Http\MediaFileUpload;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\AdapterInterface;
 use League\Flysystem\Config;
@@ -36,9 +36,9 @@ class GoogleDriveAdapter extends AbstractAdapter
     const DIRMIME = 'application/vnd.google-apps.folder';
 
     /**
-     * Google_Service_Drive instance
+     * Google\Service\Drive instance
      *
-     * @var Google_Service_Drive
+     * @var Google\Service\Drive
      */
     protected $service;
 
@@ -154,7 +154,7 @@ class GoogleDriveAdapter extends AbstractAdapter
      */
     private $defaultParams = [];
 
-    public function __construct(Google_Service_Drive $service, $root = null, $options = [])
+    public function __construct(Drive $service, $root = null, $options = [])
     {
         if (! $root) {
             $root = 'root';
@@ -185,9 +185,9 @@ class GoogleDriveAdapter extends AbstractAdapter
     }
 
     /**
-     * Gets the service (Google_Service_Drive)
+     * Gets the service (Drive)
      *
-     * @return object  Google_Service_Drive
+     * @return object  Drive
      */
     public function getService()
     {
@@ -267,7 +267,7 @@ class GoogleDriveAdapter extends AbstractAdapter
         list ($oldParent, $fileId) = $this->splitPath($path);
         list ($newParent, $newName) = $this->splitPath($newpath);
 
-        $file = new Google_Service_Drive_DriveFile();
+        $file = new DriveFile();
         $file->setName($newName);
         $opts = [
             'fields' => $this->fetchfieldsGet
@@ -302,7 +302,7 @@ class GoogleDriveAdapter extends AbstractAdapter
 
         list ($newParentId, $fileName) = $this->splitPath($newpath);
 
-        $file = new Google_Service_Drive_DriveFile();
+        $file = new DriveFile();
         $file->setName($fileName);
         $file->setParents([
             $newParentId
@@ -312,7 +312,7 @@ class GoogleDriveAdapter extends AbstractAdapter
             'fields' => $this->fetchfieldsGet
         ], 'files.copy'));
 
-        if ($newFile instanceof Google_Service_Drive_DriveFile) {
+        if ($newFile instanceof DriveFile) {
             $this->cacheFileObjects[$newFile->getId()] = $newFile;
             $this->cacheFileObjectsByName[$newParentId . '/' . $fileName] = $newFile;
             list ($newDir) = $this->splitPath($newpath);
@@ -341,7 +341,7 @@ class GoogleDriveAdapter extends AbstractAdapter
             $name = $file->getName();
             list ($parentId, $id) = $this->splitPath($path);
             if ($parents = $file->getParents()) {
-                $file = new Google_Service_Drive_DriveFile();
+                $file = new DriveFile();
                 $opts = [];
                 $res = false;
                 if (count($parents) > 1) {
@@ -424,7 +424,7 @@ class GoogleDriveAdapter extends AbstractAdapter
      */
     public function has($path)
     {
-        return ($this->getFileObject($path, true) instanceof Google_Service_Drive_DriveFile);
+        return ($this->getFileObject($path, true) instanceof DriveFile);
     }
 
     /**
@@ -577,7 +577,7 @@ class GoogleDriveAdapter extends AbstractAdapter
     public function getMetadata($path)
     {
         if ($obj = $this->getFileObject($path, true)) {
-            if ($obj instanceof Google_Service_Drive_DriveFile) {
+            if ($obj instanceof DriveFile) {
                 return $this->normaliseObject($obj, Util::dirname($path));
             }
         }
@@ -723,7 +723,7 @@ class GoogleDriveAdapter extends AbstractAdapter
             $paths[$key] = $id;
         }
         foreach ($results as $key => $result) {
-            if ($result instanceof Google_Service_Drive_FileList) {
+            if ($result instanceof FileList) {
                 $object[$paths[$key]]['hasdir'] = $this->cacheHasDirs[$paths[$key]] = (bool) $result->getFiles();
             }
         }
@@ -767,7 +767,7 @@ class GoogleDriveAdapter extends AbstractAdapter
                 return true;
             }
             try {
-                $permission = new Google_Service_Drive_Permission($this->publishPermission);
+                $permission = new Permission($this->publishPermission);
                 if ($this->service->permissions->create($file->getId(), $permission)) {
                     return true;
                 }
@@ -860,15 +860,15 @@ class GoogleDriveAdapter extends AbstractAdapter
     }
 
     /**
-     * Get normalised files array from Google_Service_Drive_DriveFile
+     * Get normalised files array from DriveFile
      *
-     * @param Google_Service_Drive_DriveFile $object
+     * @param DriveFile $object
      * @param String $dirname
      *            Parent directory itemId path
      *
      * @return array Normalised files array
      */
-    protected function normaliseObject(Google_Service_Drive_DriveFile $object, $dirname)
+    protected function normaliseObject(DriveFile $object, $dirname)
     {
         $id = $object->getId();
         $path_parts = $this->splitFileExtension($object->getName());
@@ -937,7 +937,7 @@ class GoogleDriveAdapter extends AbstractAdapter
                     $parameters['pageToken'] = $pageToken;
                 }
                 $fileObjs = $gFiles->listFiles($parameters);
-                if ($fileObjs instanceof Google_Service_Drive_FileList) {
+                if ($fileObjs instanceof FileList) {
                     foreach ($fileObjs as $obj) {
                         $id = $obj->getId();
                         $this->cacheFileObjects[$id] = $obj;
@@ -972,14 +972,14 @@ class GoogleDriveAdapter extends AbstractAdapter
     }
 
     /**
-     * Get file oblect Google_Service_Drive_DriveFile
+     * Get file oblect DriveFile
      *
      * @param string $path
      *            itemId path
      * @param string $checkDir
      *            do check hasdir
      *
-     * @return Google_Service_Drive_DriveFile|null
+     * @return DriveFile|null
      */
     protected function getFileObject($path, $checkDir = false)
     {
@@ -1015,9 +1015,9 @@ class GoogleDriveAdapter extends AbstractAdapter
             }
         }
 
-        if ($fileObj instanceof Google_Service_Drive_DriveFile) {
+        if ($fileObj instanceof DriveFile) {
             if ($hasdir && $fileObj->mimeType === self::DIRMIME) {
-                if ($hasdir instanceof Google_Service_Drive_FileList) {
+                if ($hasdir instanceof FileList) {
                     $this->cacheHasDirs[$fileObj->getId()] = (bool) $hasdir->getFiles();
                 }
             }
@@ -1032,7 +1032,7 @@ class GoogleDriveAdapter extends AbstractAdapter
     /**
      * Get download url
      *
-     * @param Google_Service_Drive_DriveFile $file
+     * @param DriveFile $file
      *
      * @return string|false
      */
@@ -1061,11 +1061,11 @@ class GoogleDriveAdapter extends AbstractAdapter
      * @param string $name
      * @param string $parentId
      *
-     * @return Google_Service_Drive_DriveFile|NULL
+     * @return DriveFile|NULL
      */
     protected function createDirectory($name, $parentId)
     {
-        $file = new Google_Service_Drive_DriveFile();
+        $file = new DriveFile();
         $file->setName($name);
         $file->setParents([
             $parentId
@@ -1076,7 +1076,7 @@ class GoogleDriveAdapter extends AbstractAdapter
             'fields' => $this->fetchfieldsGet
         ], 'files.create'));
 
-        return ($obj instanceof Google_Service_Drive_DriveFile) ? $obj : false;
+        return ($obj instanceof DriveFile) ? $obj : false;
     }
 
     /**
@@ -1129,7 +1129,7 @@ class GoogleDriveAdapter extends AbstractAdapter
     /**
      * Normalise a Drive File that has been created
      *
-     * @param Google_Service_Drive_DriveFile $uploadedFile
+     * @param DriveFile $uploadedFile
      * @param string $localPath
      * @param string $visibility
      * @return array|bool
@@ -1138,7 +1138,7 @@ class GoogleDriveAdapter extends AbstractAdapter
     {
         list ($parentId, $fileName) = $this->splitPath($localPath);
 
-        if (!($uploadedFile instanceof Google_Service_Drive_DriveFile)) {
+        if (!($uploadedFile instanceof DriveFile)) {
             return false;
         }
 
@@ -1162,7 +1162,7 @@ class GoogleDriveAdapter extends AbstractAdapter
      * @param string $parentId
      * @param string $fileName
      * @param string $mime
-     * @return bool|Google_Service_Drive_DriveFile
+     * @return bool|DriveFile
      */
     protected function uploadResourceToGoogleDrive($resource, $parentId, $fileName, $srcDriveFile, $mime)
     {
@@ -1200,7 +1200,7 @@ class GoogleDriveAdapter extends AbstractAdapter
      * @param string $parentId
      * @param string $fileName
      * @param string $mime
-     * @return Google_Service_Drive_DriveFile
+     * @return DriveFile
      */
     protected function uploadStringToGoogleDrive($contents, $parentId, $fileName, $srcDriveFile, $mime)
     {
@@ -1214,7 +1214,7 @@ class GoogleDriveAdapter extends AbstractAdapter
      * @param string $parentId
      * @param string $fileName
      * @param string $mime
-     * @return Google_Service_Drive_DriveFile
+     * @return DriveFile
      */
     protected function ensureDriveFileExists($contents, $parentId, $fileName, $srcDriveFile, $mime)
     {
@@ -1222,7 +1222,7 @@ class GoogleDriveAdapter extends AbstractAdapter
             $mime = Util::guessMimeType($fileName, $contents);
         }
 
-        $driveFile = new Google_Service_Drive_DriveFile();
+        $driveFile = new DriveFile();
 
         $mode = 'update';
         if (! $srcDriveFile) {
@@ -1337,11 +1337,11 @@ class GoogleDriveAdapter extends AbstractAdapter
      * @param $mime
      * @param $chunkSizeBytes
      *
-     * @return Google_Http_MediaFileUpload
+     * @return MediaFileUpload
      */
     protected function getMediaFileUpload($client, $request, $mime, $chunkSizeBytes)
     {
-        return new Google_Http_MediaFileUpload($client, $request, $mime, null, true, $chunkSizeBytes);
+        return new MediaFileUpload($client, $request, $mime, null, true, $chunkSizeBytes);
     }
 
     /**
@@ -1353,7 +1353,7 @@ class GoogleDriveAdapter extends AbstractAdapter
      * @return array
      *
      * @see https://developers.google.com/drive/v3/reference/files
-     * @see \Google_Service_Drive_Resource_Files
+     * @see \Google\Service\Drive\Resource\Files
      */
     protected function applyDefaultParams($params, $cmdName)
     {
@@ -1370,7 +1370,7 @@ class GoogleDriveAdapter extends AbstractAdapter
      * @return void
      *
      * @see https://developers.google.com/drive/v3/reference/files
-     * @see \Google_Service_Drive_Resource_Files
+     * @see \Google\Service\Drive\Resource\Files
      */
     public function enableTeamDriveSupport()
     {
@@ -1394,7 +1394,7 @@ class GoogleDriveAdapter extends AbstractAdapter
      *
      * @see https://developers.google.com/drive/v3/reference/files
      * @see https://developers.google.com/drive/v3/reference/files/list
-     * @see \Google_Service_Drive_Resource_Files
+     * @see \Google\Service\Drive\Resource\Files
      */
     public function setTeamDriveId($teamDriveId, $corpora = 'teamDrive')
     {
